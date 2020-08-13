@@ -86,11 +86,7 @@ Please cite:
   * distinctCA.py: removes duplicated pharmacogenomic interactions and build the main tables
 
 * R-script:
-<<<<<<< HEAD
   * UpSet.R: make Figure 2
-=======
- * UpSet.R: make Figure 2
->>>>>>> b2d11ab92dd9675cd0cf5f6f2dfb2f3d6abc74df
 
 # Bibliography
 M. H. Bailey *et al.*, *Comprehensive Characterization of Cancer Driver Genes and Mutations*, Cell, vol. 173, no. 2, pp. 371-385.e18, Apr. 2018.
