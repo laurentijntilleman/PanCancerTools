@@ -10,6 +10,10 @@ from pymongo import MongoClient
 import pandas as pd
 import re
 import CrossMap
+import matplotlib
+sys.path.append('extraPackages')
+import venn
+from collections import defaultdict
 
 # connect to mongoDB
 client = MongoClient()
@@ -148,7 +152,7 @@ for line in oneL_Intron.index:
     foundationOneLiquid = foundationOneLiquid.append(intron[intron[3]==oneL_Intron.loc[line][0]][intron[4]==int(oneL_Intron.loc[line][1])-1])
 
 # load all pannels
-panels = [pd.read_csv('data/xgen-exome-research-panel-targetsae255a1532796e2eaa53ff00001c1b3c.bed',header=None,sep='\t'),
+panels = [pd.read_csv('data/xgen-exome-research-panel-v2-targets-hg1902a5791532796e2eaa53ff00001c1b3c.bed',header=None,sep='\t'),
           pd.read_csv('data/PanCancerV2.4.target(hg19).bed',header=None,sep='\t'),
           pd.read_csv('data/TST500C_manifest.bed',header=None,sep='\t'),
           pd.read_csv('data/CCP.20131001.submitted.bed',header=None,sep='\t',skiprows=1),
@@ -162,7 +166,7 @@ panels = [pd.read_csv('data/xgen-exome-research-panel-targetsae255a1532796e2eaa5
 
 # pan cancer datasets
 panCancerMutations = pd.read_csv('data/driverMutation.csv')
-panCancerFusions = pd.read_excel('data/1-s2.0-S2211124718303954-mmc2.xlsx',sheetname=1,skiprows=1)
+panCancerFusions = pd.read_excel('data/1-s2.0-S2211124718303954-mmc2.xlsx',sheet_name=1,skiprows=1)
 
 # define the index
 dataSets = ['sensitive A','sensitive B','sensitive C','sensitive D',
@@ -171,7 +175,7 @@ dataSets = ['sensitive A','sensitive B','sensitive C','sensitive D',
             'PanCancer Mutations','PanCancer Fusion']
 
 # define the columns
-columns = ['Total','Exome IDT','IDT2','Illumina','AmpliSeq','Qiagen',
+columns = ['Total','Exome','IDT','Illumina','AmpliSeq','Qiagen',
            'AVENIO Targeted','AVENIO Expanded','AVENIO Surveillance',
            'FoundationOne CDx','FoundationOne Liquid']
 
@@ -179,6 +183,7 @@ columns = ['Total','Exome IDT','IDT2','Illumina','AmpliSeq','Qiagen',
 dataTable = pd.DataFrame(0,index = dataSets +
                                     list(set([x for y in set(panCancerMutations['CODE']) for x in y.split(',')])),
                          columns = columns)
+UpSet_panelPI = pd.DataFrame(columns = columns[1:])
 
 # query all pharmacogenomic interactions
 data = [x for x in db.PGxDD.find({})]
@@ -188,6 +193,7 @@ for d in data:
     columnN = 1
     dataTable['Total'][d['responceType']+' '+d['evidenceLabel'][0]] +=1
     plusCount = False
+    upSetList = [0] * 10
     for panel in panels:
         count = 0
         column = dataTable.columns[columnN]
@@ -263,7 +269,9 @@ for d in data:
                 count += 1
         if count > 0:
             dataTable[column][d['responceType']+' '+d['evidenceLabel'][0]] +=1
+            upSetList[columnN-1] = 1
         columnN +=1
+    UpSet_panelPI.loc[d['_id']] = upSetList
 
 # count Pan-Cancer fusions
 countFusions = 0
@@ -363,7 +371,7 @@ for variant in variantsDict:
                 pass
             panelVariants.loc['variants','Total'] +=1
             panelCol = 1
-            upSetList = [0] * 11
+            upSetList = [0] * 10
             variantCount += 1
             for panel in panels:
                 if feature['end'] == feature['start']:
@@ -397,9 +405,9 @@ for variant in variantsDict:
                                 panelVariants.loc['variants',columns[panelCol]] +=1
                                 upSetList[panelCol-1] = 1
                 panelCol +=1
-            exec('UpSet_{}.loc["{}"] = {}'.format('panelVariants',variantCount,upSetList))
+            UpSet_panelVariants.loc[variantCount] = upSetList
 
-UpSet_panelVariants.to_csv("results/UpSet_panelVariants.csv")       
+UpSet_panelVariants.to_csv("results/UpSet_panelVariants.csv")
 panelVariants.to_csv('results/panelVariants.csv')
 
 # count variants in database
@@ -413,11 +421,105 @@ for variant in variants:
 ## sources of knowledge bases
 
 sourceTable = pd.DataFrame(columns = ['cgi','civic','depo','jax','oncokb'])
+sourceDict = defaultdict(list)
 
 for x in db.PGxDD.find({}):
     sourceTable.loc[x['_id']] = [1 if y in x['source'] else 0 for y in sourceTable.columns]
-
+    for y in x['source']:
+        sourceDict[y].append(x['_id'])
 sourceTable.to_csv('results/sourceTable.csv')
+labels = venn.get_labels([set(sourceDict[x]) for x in sourceDict])
+sourceNameDict = {'depo':'DEPO','civic':'CIViC','oncokb':'OncoKB','cgi':'CGI',
+                  'jax':'JAX-CKB'}
+fig, ax = venn.venn5(labels, names=[sourceNameDict[x] for x in sourceDict.keys()])
+fig.savefig('results/figure1.pdf')
+fig.savefig('results/figure1.png')
+
+## Data base to table
+
+databaseTable = pd.DataFrame(columns = ['Drug','Gene','Responce type',
+                                        'Evidence lable','Source'])
+
+## refseq sequences:
+
+refSeq = {'1':"NC_000001.11",
+          '2':"NC_000002.12",
+          '3':"NC_000003.12",
+          '4':"NC_000004.12",
+          '5':"NC_000005.10",
+          '6':"NC_000006.12",
+          '7':"NC_000007.14",
+          '8':"NC_000008.11",
+          '9':"NC_000009.12",
+          '10':"NC_000010.11",
+          '11':"NC_000011.10",
+          '12':"NC_000012.12",
+          '13':"NC_000013.11",
+          '14':"NC_000014.9",
+          '15':"NC_000015.10",
+          '16':"NC_000016.10",
+          '17':"NC_000017.11",
+          '18':"NC_000018.10",
+          '19':"NC_000019.10",
+          '20':"NC_000020.11",
+          '21':"NC_000021.9",
+          '22':"NC_000022.11",
+          '23':"NC_000023.11",
+          '24':"NC_000024.10",
+          'X':"NC_000023.11",
+          'Y':"NC_000024.10"}
+
+
+for x in db.PGxDD.find({}):
+    databaseTable.loc[x['_id'],'Drug'] = x['drug']
+    databaseTable.loc[x['_id'],'Gene'] = x['gene']
+    variantName = ''
+    variantHGVS = ''
+    variantChr = ''
+    variantPosition = ''
+    t = 0
+    for variantF in x['features']:
+        if t != 0:
+            variantName += ' | '
+            variantHGVS += ' | '
+            variantChr += ' | '
+            variantPosition += ' | '
+        t += 1
+        variantName += variantF['description']
+        if variantF['chromosome'] == 'None':
+            print(variantF)
+        elif variantF['chromosome'] == 'X':
+            variantChrP =  'X'
+        elif variantF['chromosome'] == 'Y':
+            variantChrP =  'Y'
+        else:
+            variantChrP =  str(int(float(variantF['chromosome'])))
+            if int(variantChrP) > 22:
+                if variantChrP == 23:
+                    variantChrP =  'X'
+                if variantChrP == 24:
+                    variantChrP =  'Y'
+        variantChr += variantChrP
+        if str(int(variantF['start'])) == str(int(variantF['end'])):
+            variantPositionP = str(int(variantF['start']))
+        else:
+            variantPositionP = str(int(variantF['start'])) + '_' + str(int(variantF['end']))
+        variantPosition += variantPositionP
+        if 'ref' in variantF:
+            if variantF['ref']:
+                if variantF['ref'] != 'None':
+                    variantHGVS += refSeq[variantChrP] + ':g.' + variantPositionP + variantF['ref']  + '>' + variantF['alt']
+    databaseTable.loc[x['_id'],'Variant Name'] = variantName
+    databaseTable.loc[x['_id'],'Variant HGVS'] = variantHGVS
+    databaseTable.loc[x['_id'],'Variant Chr'] = variantChr
+    databaseTable.loc[x['_id'],'Variant Position'] = variantPosition
+    databaseTable.loc[x['_id'],'Responce type'] = x['responceType']
+    databaseTable.loc[x['_id'],'Evidence lable'] = x['evidenceLabel']
+    databaseTable.loc[x['_id'],'Source'] = ' | '.join(x['source'])
+databaseTable.to_csv('results/databaseTable.csv')
+
+databaseTable2 = pd.concat([databaseTable, UpSet_panelPI],axis=1)
+databaseTable2.to_csv('results/databaseTable2.csv')
 
 ## Overlap meta-knowledge base and Pan-Cancer driver mutations
 
