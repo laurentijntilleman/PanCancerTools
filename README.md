@@ -1,6 +1,10 @@
 # PanCancerTools
 
-## Data preproseccing
+This GitHub directory contains the script used in manuscript 'Pan-cancer pharmacogenetics: targeted sequencing panels or exome sequencing?'
+Please cite:
+- Laurentijn Tilleman , Björn Heindryckx, Dieter Deforce & Filip Van Nieuwerburgh *Pan-cancer pharmacogenetics: targeted sequencing panels or exome sequencing?* Pharmacogenomics 2020, (doi: [10.2217/pgs-2020-0035](http://dx.doi.org/10.2217/pgs-2020-0035))
+
+## Data preprocessing
 
 * Harvest the databases:
   * Run the harvester tool in https://github.com/laurentijntilleman/g2p-aggregator for CGI, CIViC, OncoKB, DEPO, and JAX-CKB
@@ -8,15 +12,15 @@
   * Copy cosmic_lookup_table.tsv from g2p-aggregator/harvester/ to the data folder
 
 * Pan-Cancer data:
-  * Download Mutation.CTAT.3D.Scores.txt from https://gdc.cancer.gov/about-data/publications/pancan-driver in the data folder
-  *
+  * Download Mutation.CTAT.3D.Scores.txt from https://gdc.cancer.gov/about-data/publications/pancan-driver in the data folder (Bailey *et al.*, 2018)
+  * Download 1-s2.0-S2211124718303954-mmc2.xlsx from supplemental information from Gao *et al.* (2018)
 
 * Panels:
-  * Data resived from the suplier can be found in the data folder
-  * Genomic coordinates of the targeted regions of the Ion AmpliSeq Comprehensive Cancer Panel can be downloaded via https://ampliseq.com/protected/tmpl/download.action?tmplDesignId=50986615
+  * Data received from the supplier can be found in the data folder
+  * Sources of the data can be found in the manuscript (Tilleman *et al.*, 2020)
 
 * GRCh38 to GRCh37 conversion:
-  * Download the chain file from http://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz in to the data folder
+  * Download the chain file from http://hgdownload.soe.ucsc.edu/goldenPath/hg38/liftOver/hg38ToHg19.over.chain.gz into the data folder
 
 * UCSC exone coordinates:
   * Download UCSC_exons.bed from the [UCSC Table Browser](https://genome.ucsc.edu/cgi-bin/hgTables):
@@ -71,24 +75,24 @@
 * target.txt : The genes of the AVENIO ctDNA Targeted Kit
 * Targeted_Panel_Regions_Information_Tumor_08374317001.xlsx : The targeted regions of the AVENIO ctDNA Targeted Kit
 
-
-## virtual environment
-Build two virtual environments with the packages files. packagesPy2.txt: packages for python2, packagesPy3.txt: packages for python3
-
 ## Scripts
 
 * Python2:
- * PanCancer_mutations.py: lookup of the genomic coordinates of the Pan-Cancer driver mutations
+  * PanCancer_mutations.py: lookup of the genomic coordinates of the Pan-Cancer driver mutations
 
 * Python3:
- * loadMongoDB.py: load output of the harvester tool in the mongoDB
- * queryPGX.py: compared the targeted sequencing panels based on genes
- * distinctCA.py: removes duplicated pharmacogenomic interactions and build the main tables
+  * loadMongoDB.py: load output of the harvester tool in the mongoDB
+  * queryPGX.py: compared the targeted sequencing panels based on genes
+  * distinctCA.py: removes duplicated pharmacogenomic interactions and build the main tables
 
 * R-script:
- * UpSet.R: make figure 1
+  * UpSet.R: make Figure 2
 
-# Bibliographie
-M. H. Bailey et al., “Comprehensive Characterization of Cancer Driver Genes and Mutations,” Cell, vol. 173, no. 2, pp. 371-385.e18, Apr. 2018.
+# Bibliography
+M. H. Bailey *et al.*, *Comprehensive Characterization of Cancer Driver Genes and Mutations*, Cell, vol. 173, no. 2, pp. 371-385.e18, Apr. 2018.
 
-A. H. Wagner et al., “A harmonized meta-knowledgebase of clinical interpretations of cancer genomic variants,” bioRxiv, p. 366856, Oct. 2018.
+A. H. Wagner *et al.*, *A harmonized meta-knowledgebase of clinical interpretations of cancer genomic variants*, bioRxiv, p. 366856, Oct. 2018.
+
+Q. Gao *et al.*, *Diver fusions and their implications in the development and treatment of human cancers*, Cell, vol. 23, no. 1, pp. 227–238, 2018.
+
+L. Tilleman *et al.*, *Pan-cancer pharmacogenetics: targeted sequencing panels or exome sequencing?* Pharmacogenomics 2020, (doi: [10.2217/pgs-2020-0035](http://dx.doi.org/10.2217/pgs-2020-0035))
